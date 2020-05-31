@@ -1,0 +1,254 @@
+<?php get_header(); 
+global $wpdb;
+$min_price = $wpdb->get_var( "SELECT MIN(cast(meta_value as unsigned)) FROM $wpdb->postmeta WHERE meta_key = 'events_prices_price_min' AND meta_value IS NOT NULL AND meta_value <> 0" );
+
+$max_price = $wpdb->get_var( "SELECT MAX(cast(meta_value as unsigned)) FROM $wpdb->postmeta WHERE meta_key = 'events_prices_price_max' AND meta_value IS NOT NULL AND meta_value <> 0" );
+
+?>
+<!--
+переподключить скрипты
+-->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/js/ion.rangeSlider.js" type="text/javascript"></script>
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/css/ion.rangeSlider.css'>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/js/ion.rangeSlider.min.js'></script>
+
+<!--
+<link href="https://cdnjs.cloudflare.com/ajax/libs/air-datepicker/2.2.3/css/datepicker.css" rel="stylesheet" type="text/css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/air-datepicker/2.2.3/js/datepicker.js"></script> -->
+<?php
+
+?>
+
+<div id="content" role="main">
+	<h2>Все мероприятия</h2>
+	<form action="<?php echo site_url() ?>/wp-admin/admin-ajax.php" method="POST" id="filter">
+		<div class="custom-control ">
+			<label>
+				Жанры:</br>
+				<?php
+		if( $terms = get_terms( array( 'taxonomy' => 'event_type', 'orderby' => 'name' ) ) ) : 
+ 
+			echo '<select name="categoryfilter"><option value="">Выберете жанры</option>';
+			foreach ( $terms as $term ) :
+				echo '<option value="' . $term->term_id . '">' . $term->name . '</option>'; // ID of the category as the value of an option
+			endforeach;
+			echo '</select>';
+		endif;
+	?></label>
+		</div>
+		<div class="custom-control ">
+			<label>
+				Дата:</br></label></br>
+				<input class="number datepicker-here" id="from" type="text"  autocomplete="off" placeholder="От:"/>
+				<input class="number datepicker-here" id="to" type="text"   autocomplete="off" placeholder="До:"/> 
+				<input class="datepicker-here"id="thealtdatefrom" type="hidden" name="date_start" placeholder="От:" />
+				<input class="datepicker-here" id="thealtdateto" type="hidden" name="date_end" placeholder="До:" />
+		</div>
+		<div class="custom-control " style="min-width:250px;width:100%;padding-right:10px;">
+		<!-- div class="range-slider">
+    <input type="text" class="js-range-slider" value="" />
+</!-->
+			<label  style="width:100%;">Цена:
+			<!-- div id="polzunok"></!-->
+			<div class="range-slider">
+    <input type="text" class="js-range-slider" value="" / >
+</div>
+<input id="price_min" class="number js-input-from" type="hidden" name="price_min"  value="0" placeholder="<? echo $min_price ?>" />
+				<input id="price_max"  class="number js-input-to"  type="hidden" name="price_max"   value="0" placeholder="2000" /></label>
+<script>
+	jQuery(document).ready(function($){ 
+$(function () {
+  
+	var $range = $(".js-range-slider"),
+			$inputFrom = $(".js-input-from"),
+			$inputTo = $(".js-input-to"),
+			instance,
+			min = 0,
+			max = <? echo $max_price ?>,
+			from = 0,
+			to = 0;
+	
+	$range.ionRangeSlider({
+			type: "double",
+		 skin: "round",
+			min: min,
+			max: max,
+			from: <? echo $min_price ?>,
+			to: 3000,
+			onStart: updateInputs,
+			onChange: updateInputs,
+			step: 100,
+			prettify_enabled: true,
+			prettify_separator: ".",
+		values_separator: " - ",
+		force_edges: true
+		});
+	
+	instance = $range.data("ionRangeSlider");
+	
+	function updateInputs (data) {
+			from = data.from;
+			to = data.to;
+			$inputFrom.prop("value", from);
+			$inputTo.prop("value", to); 
+	}
+	
+	$inputFrom.on("input", function () {
+			var val = $(this).prop("value");
+			
+			// validate
+			if (val < min) {
+					val = min;
+			} else if (val > to) {
+					val = to;
+			}
+			
+			instance.update({
+					from: val
+			});
+	});
+	
+	$inputTo.on("input", function () {
+			var val = $(this).prop("value");
+			
+			// validate
+			if (val < from) {
+					val = from;
+			} else if (val > max) {
+					val = max;
+			}
+			
+			instance.update({
+					to: val
+			});
+	});
+	
+			});
+	});  
+</script>
+
+		
+			</div >
+				<div class="custom-control ">
+					<button class="btn btn-primary">Применить</button>
+				
+				</div>	<a href=""  Class="btn"id="clear">Сбросить</a>
+				<input type="hidden" name="action" value="artfilter">
+	</form>
+<div style="display: none">
+<?
+echo '<pre>';
+print_r($_COOKIE);
+echo '</pre>';
+?>
+</div>
+<?//button class="filter">Применить</button?>
+	<?php if ( have_posts() ) : ?>
+
+	<div class="page-members clearfix">
+
+
+
+	<div id="response" class="row ">
+	
+			<?php
+			while ( have_posts() ) {
+				the_post();
+
+				get_template_part( 'content', 'show' );
+			}
+			?>
+	
+</div>
+		<?php porto_pagination(); ?>
+
+	</div>
+
+	<?php wp_reset_postdata(); ?>
+
+	<?php else : ?>
+
+	<p><?php esc_html_e( 'Apologies, but no results were found for the requested archive.', 'porto' ); ?></p>
+
+	<?php endif; ?>
+
+</div>
+<script>
+
+jQuery(function($){
+	window.onload = function() {
+			$('body').on('click','.btn-primary', function(){
+			var filter = $('#filter');
+			$.ajax({
+				url:filter.attr('action'),
+				data:filter.serialize(), // form data
+				type:filter.attr('method'), // POST
+				beforeSend:function(xhr){
+					filter.find('button').text('Вычисляю....'); // changing the button label
+				},
+				success:function(data){
+					filter.find('button').text('Фильтровать'); // changing the button label back
+					$('#response').html(data); // insert data
+		
+					if($("#price_min").val() == '' || $("#price_min").val().lenght <= 0)
+						$("#price_min").val(500);   
+					if($("#price_max").val() == '' || $("#price_max").val().lenght <= 0)
+						$("#price_max").val(2000);
+					filter_price_min = parseInt($("#price_min").val());
+					filter_price_max = parseInt($("#price_max").val());
+					
+
+					$('article.show-card').each(function(indx, element){
+						price_max = parseInt($(element).find('.article_price_max').text());
+						price_min = parseInt($(element).find('.article_price_min').text());
+						if(
+							(price_min >= filter_price_min) && (price_max <= filter_price_max) ||
+							(price_max <= filter_price_max) && (price_max >= filter_price_min) ||
+							(price_min >= filter_price_min) && (price_min <= filter_price_max) ||
+							(price_min <= filter_price_min) && (price_max >= filter_price_max)
+						){
+							$(element).show();
+						}else{
+							$(element).hide();
+						}
+					});
+				}
+			});
+
+				return false;
+		});
+	}
+
+});
+jQuery('#clear').click(function(){
+	jQuery('#my_field').val(''); // by ID selector
+	jQuery('select[name="categoryfilter"]').val(''); // or by name selector
+	jQuery('#filter').submit();
+
+
+ return false;
+});
+
+</script>
+<script> 
+    jQuery().ready(function($) {
+       $("#from").datepicker({
+					maxDate: '+3Y',
+				  minDate: '0d',
+					dateFormat: 'dd.mm.yy',
+        	altField: '#thealtdatefrom',
+        	altFormat: 'yymmdd'
+});
+				$("#to").datepicker({
+					maxDate: '+3Y',
+				  minDate: '0d',
+					dateFormat: 'dd.mm.yy',
+        	altField: '#thealtdateto',
+        	altFormat: 'yymmdd'
+});
+ });
+
+</script>
+
+<?php get_footer(); ?>
